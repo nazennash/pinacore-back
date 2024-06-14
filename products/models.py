@@ -47,8 +47,7 @@ class Product(models.Model):
     brand = models.CharField(max_length=255, null=True, blank=True)
     size = models.CharField(max_length=50, choices=SIZES, blank=True, null=True)
     color = models.CharField(max_length=50, null=True, blank=True)
-    custom_attributes = models.JSONField(null=True, blank=True)
-
+    
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
