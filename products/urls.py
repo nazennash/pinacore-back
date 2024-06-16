@@ -7,7 +7,10 @@ router.register('main_category', views.MainCategoryView, basename='main_category
 router.register('sub_category', views.SubCategoryView, basename='sub_category')
 router.register('sub_type_category', views.SubTypeCategorView, basename='sub_type_category')
 router.register('products', views.ProductView, basename='products')
+router.register('order', views.OrderView, basename='order')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path("payment/", views.PaymentView.as_view(), name="payment"),
+
 ] 

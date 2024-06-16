@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
 
+    'django_daraja',
+
     'users',
     'products',
 ]
@@ -140,3 +142,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+MPESA_ENVIRONMENT = "sandbox"
+MPESA_CONSUMER_KEY = "YcJgAvZ1scBITlpPkEfCYvT7MDKBtd9a5k2dTlpChRpdWzuX"
+MPESA_CONSUMER_SECRET = (
+    "VnDiAQTciYUynt8pf04PmUOa2InlAwHFUa6SxbdbcLfEKSbAAshFcVa3kQO9Ohik"
+)
+MPESA_SHORTCODE = "174379"
+MPESA_EXPRESS_SHORTCODE = "174379"
+MPESA_SHORTCODE_TYPE = "paybill"
+MPESA_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+MPESA_INITIATOR_USERNAME = "testapi"
+MPESA_INITIATOR_SECURITY_CREDENTIAL = "Safaricom999!*!"

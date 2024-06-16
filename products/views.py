@@ -10,6 +10,10 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework.decorators import action
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+import traceback
+from django_daraja.mpesa.core import MpesaClient
+from rest_framework.views import APIView
 
 
 class ProductPagination(PageNumberPagination):
@@ -79,3 +83,40 @@ class ProductView(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
     
+class OrderView(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+class PaymentView(APIView):
+    def post(self, request):
+        try:
+            print(request.user)
+            phone_number = request.data.get("phone_number")
+            print(phone_number)
+            amount = request.data.get("price")
+            print(amount)
+
+            if not phone_number or not amount:
+                return Response(
+                    {"error": "Phone number and amount are required."}, status=400
+                )
+
+            print("one")
+            cl = MpesaClient()
+            token = cl.access_token()
+            account_reference = "reference"
+            transaction_desc = "Description"
+            print("two")
+            callback_url = (
+                "https://api.darajambili.com/express-payment" 
+            )
+            print("three")
+            response = cl.stk_push(
+                phone_number, amount, account_reference, transaction_desc, callback_url
+            )
+            print("four")
+
+            return Response(response)
+        except Exception as e:
+            traceback.print_exc()
+            return Response({"error": str(e)}, status=500)
