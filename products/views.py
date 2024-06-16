@@ -14,6 +14,9 @@ from rest_framework.permissions import IsAuthenticated
 import traceback
 from django_daraja.mpesa.core import MpesaClient
 from rest_framework.views import APIView
+from rest_framework import filters
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
 
 
 class ProductPagination(PageNumberPagination):
@@ -39,6 +42,9 @@ class ProductView(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     pagination_class = ProductPagination
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'description', 'main_category__name', 'sub_category__name']
+    ordering_fields = ['name', 'price', 'created_at']
 
     def get_queryset(self):
         queryset = list(Product.objects.all())
@@ -54,6 +60,25 @@ class ProductView(viewsets.ModelViewSet):
         data["image"] = request.build_absolute_uri(data["image"])
 
         return Response(data)
+    
+    @action(detail=False, methods=['get'], url_path='search')
+    def search(self, request):
+        q = request.query_params.get('search', '')
+        queryset = Product.objects.filter(
+            Q(name__icontains=q) |
+            Q(description__icontains=q) |
+            Q(main_category__name__icontains=q) |
+            Q(sub_category__name__icontains=q) |
+            Q(sub_type_category__name__icontains=q) 
+        )
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     
     @action(detail=False, methods=['get'])
