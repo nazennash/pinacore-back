@@ -10,38 +10,40 @@ SIZES = (
 )
 
 class MainCategory(models.Model):
-    name = models.CharField(max_length=255, blank=True)
-    image = models.ImageField(upload_to='images')
+    name = models.CharField(max_length=255, null=True, blank=True)
+    image = models.ImageField(upload_to='images', null=True, blank=True)
 
     def __str__(self):
         return self.name
 
 class SubCategory(models.Model):
     main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE, blank=True, null=True)
-    name = models.CharField(max_length=255, blank=True)
-    image = models.ImageField(upload_to='images')
+    name = models.CharField(max_length=255, null=True, blank=True)
+    image = models.ImageField(upload_to='images', null=True, blank=True)
 
     def __str__(self):
         return self.name
 
 class SubTypeCategory(models.Model):
     sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE, blank=True, null=True)
-    name = models.CharField(max_length=255, blank=True)
-    image = models.ImageField(upload_to='images')
+    name = models.CharField(max_length=255, null=True, blank=True)
+    image = models.ImageField(upload_to='images', null=True, blank=True)
 
     def __str__(self):
         return self.name
 
 class Product(models.Model):
-    main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE)
-    sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE)
-    sub_type_category = models.ForeignKey(SubTypeCategory, on_delete=models.CASCADE)
-    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')
+    main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE, null=True, blank=True)
+    sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE, null=True, blank=True)
+    sub_type_category = models.ForeignKey(SubTypeCategory, on_delete=models.CASCADE, null=True, blank=True)
+    # seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
+    seller = models.CharField(max_length=12, null=True, blank=True, default=False)
 
 
-    name = models.CharField(max_length=50)
-    description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    name = models.CharField(max_length=50, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     discounted_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to='images/', null=True, blank=True)
     brand = models.CharField(max_length=255, null=True, blank=True)

@@ -16,17 +16,24 @@ class SubTypeCategorySerializer(serializers.ModelSerializer):
         model = SubTypeCategory
         fields = '__all__'
 
+
 class ProductSerializer(serializers.ModelSerializer):
-    main_category = MainCategorySerializer()
-    sub_category = SubCategorySerializer()
-    sub_type_category = SubTypeCategorySerializer()
+    main_category = serializers.PrimaryKeyRelatedField(queryset=MainCategory.objects.all())
+    sub_category = serializers.PrimaryKeyRelatedField(queryset=SubCategory.objects.all())
+    sub_type_category = serializers.PrimaryKeyRelatedField(queryset=SubTypeCategory.objects.all())
     discount_percentage = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Product
         fields = '__all__'
 
     def get_discount_percentage(self, obj):
         return obj.discount_percentage()
+
+class CreateProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
 
 class CartSerializer(serializers.ModelSerializer):
     product = ProductSerializer()
