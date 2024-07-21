@@ -21,7 +21,7 @@ class RegisterView(APIView):
         if serializer.is_valid():
             phone_number = serializer.validated_data['phone_number']
             if CustomUser.objects.filter(phone_number=phone_number).exists():
-                return Response({"message": "user exists"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "user exists"}, status=status.HTTP_401_UNAUTHORIZED)
             serializer.save()
             return Response({"message": "user created"}, status=status.HTTP_200_OK)
         else:
