@@ -18,6 +18,7 @@ class SubTypeCategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    seller = serializers.ReadOnlyField(source='seller.username')
     main_category = serializers.PrimaryKeyRelatedField(queryset=MainCategory.objects.all())
     sub_category = serializers.PrimaryKeyRelatedField(queryset=SubCategory.objects.all())
     sub_type_category = serializers.PrimaryKeyRelatedField(queryset=SubTypeCategory.objects.all())
@@ -29,6 +30,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_discount_percentage(self, obj):
         return obj.discount_percentage()
+
 
 class CreateProductSerializer(serializers.ModelSerializer):
     class Meta:

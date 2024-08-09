@@ -106,3 +106,44 @@ class Logout(APIView):
             return Response({'detail': f'{request.user} logged out successfully.'}, status=status.HTTP_200_OK)
         else:
             return Response({'detail': 'No user was logged in.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .serializers import RegisterSellerSerializer
+
+class RegisterSellerView(APIView):
+    def post(self, request):
+        serializer = RegisterSellerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Seller registered successfully"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth import login
+from rest_framework_simplejwt.tokens import RefreshToken
+from .serializers import SellerLoginSerializer
+
+class SellerLoginView(APIView):
+    def post(self, request):
+        serializer = SellerLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            login(request, user)
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'username': user.username,
+                'user': user.name,
+                'email': user.email,
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

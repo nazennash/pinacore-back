@@ -32,14 +32,17 @@ class SubTypeCategory(models.Model):
     def __str__(self):
         return self.name
 
+from django.db import models
+from users.models import CustomUser as User
+
+from django.db import models
+from users.models import CustomUser as User
+
 class Product(models.Model):
     main_category = models.ForeignKey(MainCategory, on_delete=models.CASCADE, null=True, blank=True)
     sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE, null=True, blank=True)
     sub_type_category = models.ForeignKey(SubTypeCategory, on_delete=models.CASCADE, null=True, blank=True)
-    # seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
-    seller = models.CharField(max_length=12, null=True, blank=True, default=False)
-
-
+    seller = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products', null=True, blank=True)  # Link to seller
 
     name = models.CharField(max_length=50, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -49,7 +52,6 @@ class Product(models.Model):
     brand = models.CharField(max_length=255, null=True, blank=True)
     size = models.CharField(max_length=50, choices=SIZES, blank=True, null=True)
     color = models.CharField(max_length=50, null=True, blank=True)
-    
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -61,6 +63,8 @@ class Product(models.Model):
         if self.discounted_price:
             return int(((self.price - self.discounted_price) / self.price) * 100)
         return 0
+
+
 
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)

@@ -55,36 +55,61 @@ class CreateProductCreateView(generics.CreateAPIView):
         print(f"Created product: {instance}")
         print(f"Product details: {serializer.data}")
 
+
+
+from rest_framework import viewsets, status, filters
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.parsers import FormParser, MultiPartParser
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import Product, MainCategory, SubCategory, SubTypeCategory
+from .serializers import ProductSerializer
+from .permissions import IsSellerOrReadOnly
+from rest_framework.pagination import PageNumberPagination
+from django.shortcuts import get_object_or_404
+from django.db.models import Q
+import random
+from datetime import timedelta
+from django.utils import timezone
+
+class ProductPagination(PageNumberPagination):
+    page_size = 5
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class ProductView(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [IsSellerOrReadOnly]  # Apply custom permission
     parser_classes = [FormParser, MultiPartParser]
     pagination_class = ProductPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description', 'main_category__name', 'sub_category__name']
     ordering_fields = ['name', 'price', 'created_at']
 
-    @action(detail=False, methods=['post'], url_path='create')
-    def add(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
     def get_queryset(self):
-        queryset = list(Product.objects.all())
-        random.shuffle(queryset)
+        queryset = super().get_queryset()
+        
+        # Handle filtering by seller
+        seller_username = self.request.query_params.get('seller', None)
+        
+        if seller_username:
+            queryset = queryset.filter(seller__username=seller_username)
+        
+        # Further filter to the products of the logged-in seller if the user is authenticated and a seller
+        if self.request.user.is_authenticated and self.request.user.is_seller:
+            queryset = queryset.filter(seller=self.request.user)
+        
         return queryset
-    
+
     def perform_create(self, serializer):
-        serializer.save()
+        # Automatically associate the logged-in user as the seller
+        serializer.save(seller=self.request.user)
 
     def perform_update(self, serializer):
         serializer.save()
 
     def create(self, request, *args, **kwargs):
-        seller = request.data.get('seller')
         main_category_id = request.data.get('main_category')
         sub_category_id = request.data.get('sub_category')
         sub_type_category_id = request.data.get('sub_type_category')
@@ -108,6 +133,7 @@ class ProductView(viewsets.ModelViewSet):
         data['main_category'] = main_category.id
         data['sub_category'] = sub_category.id
         data['sub_type_category'] = sub_type_category.id
+        data['seller'] = request.user.id  # Automatically associate the seller
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -147,12 +173,20 @@ class ProductView(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, pk=None):
-        queryset = Product.objects.all()
+        queryset = self.get_queryset()
         product = get_object_or_404(queryset, pk=pk)
         serializer = ProductSerializer(product, many=False)
         data = serializer.data
         data["image"] = request.build_absolute_uri(data["image"])
         return Response(data)
+
+    @action(detail=False, methods=['post'], url_path='create')
+    def add(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=True, methods=['put'], url_path='upload-image')
     def upload_image(self, request, pk=None):
@@ -204,7 +238,8 @@ class ProductView(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)    
+        return Response(serializer.data)
+
 
 
 class OrderView(viewsets.ModelViewSet):

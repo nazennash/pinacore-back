@@ -46,6 +46,8 @@ REST_FRAMEWORK = {
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend', 
     'users.authentication.OTPBackend',    
+    'users.authentication.SellerBackend',
+    'users.authentication.EmailBackend',
 )
 
 MIDDLEWARE = [
@@ -138,6 +140,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
+CORS_ALLOW_CREDENTIALS = True  # Allow cookies and credentials to be included
 CORS_ALLOW_ALL_ORIGINS = True
 
 MPESA_ENVIRONMENT = "sandbox"
