@@ -45,9 +45,7 @@ REST_FRAMEWORK = {
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend', 
-    'users.authentication.OTPBackend',    
-    'users.authentication.SellerBackend',
-    'users.authentication.EmailBackend',
+    'users.authentication.CombinedBackend',
 )
 
 MIDDLEWARE = [

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from .serializers import RegisterUserSerializer, RequestOTPSerializer, VerifyOTPSerializer
+from .serializers import RegisterUserSerializer, RequestOTPSerializer, VerifyOTPSerializer, RegisterSellerSerializer, SellerLoginSerializer
 from rest_framework.decorators import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 import requests
 import json
 
+# Constants for SMS API
 x_username = "nazennash_42"
 x_apikey = "ohid_JQzd9Gf2yKCbPSwWo8A9gtzBTMbj7GARiXgmbMmnnUJSS"
 sendMessageURL = "https://api.onehub.co.ke/v1/sms/send"
@@ -21,11 +22,10 @@ class RegisterView(APIView):
         if serializer.is_valid():
             phone_number = serializer.validated_data['phone_number']
             if CustomUser.objects.filter(phone_number=phone_number).exists():
-                return Response({"message": "user exists"}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({"message": "User exists"}, status=status.HTTP_401_UNAUTHORIZED)
             serializer.save()
-            return Response({"message": "user created"}, status=status.HTTP_200_OK)
-        else:
-            return Response({"message": "invalid otp"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "User created"}, status=status.HTTP_200_OK)
+        return Response({"message": "Invalid input"}, status=status.HTTP_400_BAD_REQUEST)
 
 class RequestOTPView(APIView):
     def post(self, request):
@@ -38,8 +38,6 @@ class RequestOTPView(APIView):
                 user.otp = otp
                 user.save()
 
-                print(user)
-                
                 # Send OTP via SMS
                 params = {
                     "phoneNumbers": phone_number,
@@ -54,21 +52,17 @@ class RequestOTPView(APIView):
                     'x-api-key': x_apikey
                 }
 
-                print('two')
                 try:
                     req = requests.post(sendMessageURL, data=json.dumps(params), headers=headers)
                     req.raise_for_status()
-                    print('three')
                 except requests.RequestException as e:
-                    print('four')
                     return Response({"message": f"Failed to send OTP: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-                
+
                 return Response({"message": f"OTP sent to {phone_number}"}, status=status.HTTP_200_OK)
             
             except CustomUser.DoesNotExist:
-                return Response({"message": "user does not exist"}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({"message": "invalid input"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"message": "User does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Invalid input"}, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyOTPView(APIView):
     def patch(self, request):
@@ -77,10 +71,10 @@ class VerifyOTPView(APIView):
             phone_number = serializer.validated_data['phone_number']
             otp = serializer.validated_data['otp']
             user = authenticate(request, phone_number=phone_number, otp=otp)
-            name = CustomUser.objects.get(phone_number=phone_number).name
+
 
             if user is not None:
-                user.otp = None  
+                user.otp = None  # Clear OTP after successful authentication
                 user.save()
                 login(request, user)
 
@@ -89,12 +83,11 @@ class VerifyOTPView(APIView):
                     'message': 'success',
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
-                    'name': str(name),
-                    'phone_number': str(user),
+                    'name': str(user.name),
+                    'phone_number': str(user.phone_number),  # Use the phone number from the user object
                 }
                 return Response(token_data, status=status.HTTP_200_OK)
-            else:
-                return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class Logout(APIView):
@@ -104,15 +97,7 @@ class Logout(APIView):
         if request.user.is_authenticated:
             logout(request)
             return Response({'detail': f'{request.user} logged out successfully.'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'detail': 'No user was logged in.'}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .serializers import RegisterSellerSerializer
+        return Response({'detail': 'No user was logged in.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterSellerView(APIView):
     def post(self, request):
@@ -121,15 +106,6 @@ class RegisterSellerView(APIView):
             serializer.save()
             return Response({"message": "Seller registered successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth import login
-from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import SellerLoginSerializer
 
 class SellerLoginView(APIView):
     def post(self, request):
@@ -143,7 +119,7 @@ class SellerLoginView(APIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'username': user.username,
-                'user': user.name,
+                'name': user.name,
                 'email': user.email,
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
