@@ -48,13 +48,14 @@ from .models import CustomUser
 class RegisterSellerSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     username = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
-        fields = ['phone_number', 'username', 'email', 'name', 'password']
+        fields = ['username', 'email', 'password']
 
     def create(self, validated_data):
-        validated_data['is_seller'] = True  # Mark as seller
+        validated_data['is_seller'] = True
         user = CustomUser.objects.create_user(**validated_data)
         return user
 

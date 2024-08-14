@@ -102,7 +102,9 @@ class Logout(APIView):
 class RegisterSellerView(APIView):
     def post(self, request):
         serializer = RegisterSellerSerializer(data=request.data)
+        # print(request.data)
         if serializer.is_valid():
+            print(serializer.validated_data)
             serializer.save()
             return Response({"message": "Seller registered successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
