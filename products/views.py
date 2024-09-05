@@ -155,17 +155,24 @@ class ProductView(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='category/(?P<main_category_id>[^/.]+)')
     def product_category(self, request, main_category_id=None):
-        # Filter products by main category
-        queryset = list(Product.objects.filter(main_category_id=main_category_id))
-        random.shuffle(queryset)
-
-        page = self.paginate_queryset(queryset)
+        """
+        Retrieve all products filtered by the main category.
+        """
+        # Fetch the main category using the provided main_category_id
+        main_category = get_object_or_404(MainCategory, id=main_category_id)
+        
+        # Filter products that belong to the specified main category
+        products = Product.objects.filter(main_category=main_category)
+        
+        # Apply pagination if needed
+        page = self.paginate_queryset(products)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        # Serialize the filtered products
+        serializer = ProductSerializer(products, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Cart Viewset
