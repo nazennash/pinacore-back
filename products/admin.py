@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import MainCategory, SubCategory, SubTypeCategory, Product, Cart, Order, ProductImage
+from .models import MainCategory, SubCategory, SubTypeCategory, Product, Cart, Order
 
 from django.contrib import admin
 from .models import Product
@@ -15,4 +15,3 @@ admin.site.register(SubCategory)
 admin.site.register(SubTypeCategory)
 admin.site.register(Cart)
 admin.site.register(Order)
-admin.site.register(ProductImage)
